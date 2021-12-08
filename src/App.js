@@ -1,55 +1,48 @@
 import React, { Component } from 'react';
 import './App.css';
-// import Header from './Header.js';
 import axios from 'axios';
-import Form from 'react-bootstrap/Form'
-import Button from 'react-bootstrap/Button'
+import FormExplore from './FormExplore.js';
+import CityInfo from './CityInfo.js';
 
-require('dotenv').config();
 
-class App extends Component {
+export default class App extends Component {
+  
 
   constructor(props) {
     super(props);
     this.state = {
-      queryCity: '',
       locationObject: {},
       error: false
-    }
+    };
   }
 
-  getLocation = async() => {
+  getLocation = async(city) => {
+    let url = `https://us1.locationiq.com/v1/search.php?key=${process.env.REACT_APP_LOCATION_KEY}&q=${city}&format=json`;
+    console.log(url);
     try {
-      let result = await axios.get(`https://us1.locationiq.com/v1/search.php?key=${process.env.password}&q=${this.state.queryCity}&format=json`);
-        console.log(result.data[0]);
-        this.setState({ locationObject: result.data[0]})
+      let result = await axios.get(url);
+        this.setState({ locationObject: result.data[0]}, this.mapImage)
     } catch (error) {
       console.error(error);
-      console.log('there was an error');
+      console.log('Error');
       this.setState({ error: true })
     }
   }
+mapImage = () =>{
+  let url =`https://maps.locationiq.com/v3/staticmap?key=${process.env.REACT_APP_LOCATION_KEY}&center=${this.state.locationObject.lat},${this.state.locationObject.lon}&zoom=13`;
+  this.setState({locationObject: { ...this.state.locationObject, map: url }})
+}
 
-  handleSubmit = (e) => {
-    e.preventDefault();
-    this.setState({ queryCity: e.target.value }, this.getLocation);
-  }
+
 
   render() {
     return (
       <div>
-              <Form onSubmit={this.handleSubmit}>
-            <Form.Group>
-              <Form.Control type="text" placeholder="city name" name="city" />
-            </Form.Group>
-            <Button variant="primary" type="submit">
-             Explore!
-            </Button>
-          </Form>
-        {this.state.locationObject.display_name? <p>{this.state.locationObject.display_name}</p> : <p>Search for a city to explore</p>}
-        {this.state.error && <p>There was an error with your request</p>}
+        {/* {this.result.data[0]} */}
+        <FormExplore getLocation={this.getLocation}/>
+        <CityInfo locationObject={this.state.locationObject} />
       </div>
     )
   }
 }
-export default App;
+
